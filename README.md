@@ -1,2 +1,2 @@
 # kripto-ubb
-Repository for cryptography 2020/2021 UBB
+Repository for cryptography course 2020/2021 UBB
