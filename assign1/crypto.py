@@ -1,11 +1,11 @@
 """Assignment 1: Cryptography for CS41 Winter 2020.
 
-Name: <YOUR NAME>
-SUNet: <SUNet ID>
+Name: Demeter Tamás
+SUNet: dtim1806
 
-Replace this placeholder text with a description of this module.
+Cryptography Suite
 """
-import utils
+import string
 
 
 #################
@@ -22,8 +22,14 @@ def encrypt_caesar(plaintext):
 
     :returns: The encrypted ciphertext.
     """
-    # Your implementation here.
-    raise NotImplementedError('encrypt_caesar is not yet implemented!')
+
+    output = ""
+    for c in plaintext:
+        if c in string.ascii_uppercase:
+            output += string.ascii_uppercase[(string.ascii_uppercase.find(c) + 3) % len(string.ascii_uppercase)]
+        else:
+            output += c
+    return output
 
 
 def decrypt_caesar(ciphertext):
@@ -36,8 +42,15 @@ def decrypt_caesar(ciphertext):
 
     :returns: The decrypted plaintext.
     """
-    # Your implementation here.
-    raise NotImplementedError('decrypt_caesar is not yet implemented!')
+
+    output = ""
+    for c in ciphertext:
+        if c in string.ascii_uppercase:
+            output += string.ascii_uppercase[
+                (string.ascii_uppercase.find(c) + len(string.ascii_uppercase) - 3) % len(string.ascii_uppercase)]
+        else:
+            output += c
+    return output
 
 
 ###################
@@ -56,8 +69,18 @@ def encrypt_vigenere(plaintext, keyword):
 
     :returns: The encrypted ciphertext.
     """
-    # Your implementation here.
-    raise NotImplementedError('encrypt_vigenere is not yet implemented!')
+
+    output = ""
+    i = 0
+    for c in plaintext:
+        if c in string.ascii_uppercase:
+            output += string.ascii_uppercase[
+                (string.ascii_uppercase.find(c) + string.ascii_uppercase.find(keyword[i % len(keyword)])) % len(
+                    string.ascii_uppercase)]
+        else:
+            output += c
+        i += 1
+    return output
 
 
 def decrypt_vigenere(ciphertext, keyword):
@@ -72,8 +95,18 @@ def decrypt_vigenere(ciphertext, keyword):
 
     :returns: The decrypted plaintext.
     """
-    # Your implementation here.
-    raise NotImplementedError('decrypt_vigenere is not yet implemented!')
+    output = ""
+    i = 0
+    for c in ciphertext:
+        if c in string.ascii_uppercase:
+            output += string.ascii_uppercase[
+                (string.ascii_uppercase.find(c) + len(string.ascii_uppercase) - string.ascii_uppercase.find(
+                    keyword[i % len(keyword)])) % len(
+                    string.ascii_uppercase)]
+        else:
+            output += c
+        i += 1
+    return output
 
 
 ########################################
@@ -176,3 +209,126 @@ def decrypt_mh(message, private_key):
     """
     # Your implementation here.
     raise NotImplementedError('decrypt_mh is not yet implemented!')
+
+
+def encrypt_scytale(plaintext, circumference):
+    output = "" + plaintext[0]
+
+    i = circumference
+    while len(output) != len(plaintext):
+        if i >= len(plaintext):
+            i = i % len(plaintext) + 1
+        output += plaintext[i]
+        i += circumference
+    return output
+
+
+def decrypt_scytale(ciphertext, circumference):
+    return encrypt_scytale(ciphertext, circumference - 1)
+
+
+def encrypt_railfence(plaintext, num_rails):
+    rails = [['' for i in range(len(plaintext))]
+             for j in range(num_rails)]
+
+    rail = 0
+    i = 0
+    railstep = 1
+    while i < len(plaintext):
+        rails[rail].append(plaintext[i])
+        rail = rail + railstep
+        if rail == num_rails or rail == -1:
+            railstep = railstep * (-1)
+            rail = rail + (2 * railstep)
+        i += 1
+    out = ""
+
+    for r in rails:
+        for c in r:
+            out += c
+
+    return out
+
+
+def decrypt_railfence(ciphertext, num_rails):
+    rail = [['' for i in range(len(ciphertext))]
+            for j in range(num_rails)]
+
+    going_down = True
+    row, col = 0, 0
+
+    for i in range(len(ciphertext)):
+        if row == 0:
+            going_down = True
+        if row == num_rails - 1:
+            going_down = False
+
+        rail[row][col] = '.'
+        col += 1
+
+        if going_down:
+            row += 1
+        else:
+            row -= 1
+
+    index = 0
+    for i in range(num_rails):
+        for j in range(len(ciphertext)):
+            if ((rail[i][j] == '.') and
+                    (index < len(ciphertext))):
+                rail[i][j] = ciphertext[index]
+                index += 1
+
+    result = []
+    row, col = 0, 0
+    for i in range(len(ciphertext)):
+
+        if row == 0:
+            going_down = True
+        if row == num_rails - 1:
+            going_down = False
+
+        if rail[row][col] != '.':
+            result.append(rail[row][col])
+            col += 1
+
+        if going_down:
+            row += 1
+        else:
+            row -= 1
+
+    out = ""
+    for c in result:
+        out += c
+
+    return out
+
+def encrypt_scytale_file(filename, circumference):
+    f = open(filename, "rb")
+    file_data = f.read().decode()
+    output = ""
+    output+=(file_data[0])
+    i = circumference
+    while len(output) != len(file_data):
+        if i >= len(file_data):
+            i = i % len(file_data) + 1
+        output+=(file_data[i])
+        i += circumference
+
+    g = open("encrypted", "wb")
+    g.write(str.encode(output))
+
+def decrypt_scytale_file(filename,circumference):
+
+    f = open(filename, "rb")
+    file_data = f.read().decode()
+    output = ""
+    output+=(file_data[0])
+    i = circumference-1
+    while len(output) != len(file_data):
+        if i >= len(file_data):
+            i = i % len(file_data) + 1
+        output+=(file_data[i])
+        i += circumference-1
+    g = open("decrypted", "wb")
+    g.write(str.encode(output))
