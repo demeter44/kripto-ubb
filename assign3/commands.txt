@@ -1,0 +1,82 @@
+2:
+##Uj private key generalasa:
+openssl genrsa -out my_key.key 2048
+##Certificate signing request:
+openssl req -new -key my_key.key -out my_request.csr -config "C:\Program Files\OpenSSL-Win64\bin\openssl.cfg"
+##Certificate letrehozasa:
+openssl x509 -req -days 3650 -in my_request.csr -signkey my_key.key -out my_cert.crt
+
+##Keystore letrehozasa,beallitasa(uj keystore random kulcsal -> ennek torlese -> importalasa a meglevonek):
+keytool -keyalg RSA -genkeypair -alias boguscert -storepass password -keypass password -keystore testkey.jks -dname "CN=Developer, OU=Department, O=Company, L=City, ST=State, C=CA"
+keytool -delete -alias boguscert -storepass password -keystore testkey.jks
+openssl pkcs12 -export -in my_cert.crt -inkey my_key.key -name "bnr.ro" -out my.p12
+keytool -importkeystore -deststorepass password -destkeystore testkey.jks -srckeystore my.p12 -srcstoretype PKCS12
+
+
+3:
+##CA-k letrehozasa
+openssl ecparam -name secp256k1 -genkey -noout -out RootCA_key.pem
+req -new -key RootCA_key.pem -x509 -days 10 -out RootCA_cert.pem
+
+openssl ecparam -name secp256k1 -genkey -noout -out ClientCA_key.pem
+openssl req –new –key ClientCA_key.pem –out signingReqClient.csr –config "openssl.cfg"
+openssl x509 -req -days 10 -in signingReqClient.csr -CA RootCA_cert.pem -CAkey RootCA_key.pem -CAcreateserial -out ClientCA_cert.pem
+
+openssl ecparam -name secp256k1 -genkey -noout -out ServerCA_key.pem
+openssl req –new –key ServerCA_key.pem –out signingReqServer.csr –config "openssl.cfg"
+openssl x509 -req -days 10 -in signingReqServer.csr -CA RootCA_cert.pem -CAkey RootCA_key.pem -CAcreateserial -out ServerCA_cert.pem
+
+4:
+##kliens certificate
+openssl ecparam -name secp256k1 -genkey -noout -out ClientKey.pem
+openssl req –new –key ClientKey.pem –out signingReqClientCert.csr –config "openssl.cfg"
+openssl x509 -req -days 10 -in signingReqClientCert.csr -CA ClientCA_cert.pem -CAkey ClientCA_key.pem -CAcreateserial -out ClientCert.pem
+
+5:
+##server certificate
+openssl genrsa -out ServerKey.pem 2048
+openssl req –new –key ServerKey.pem –out signingReqServerCert.csr –config "openssl.cfg"
+openssl x509 -req -days 10 -in signingReqServerCert.csr -CA ServerCA_cert.pem -CAkey ServerCA_key.pem -CAcreateserial -out ServerCert.pem
+
+6:
+##uj keystoreok letrehozasa a fentebb letrehozott certekkel
+keytool -keyalg RSA -genkeypair -alias boguscert -storepass password -keypass password -keystore testkeyserver.jks -dname "CN=Developer, OU=Department, O=Company, L=City, ST=State, C=CA"
+keytool -delete -alias boguscert -storepass password -keystore testkeyserver.jks
+openssl pkcs12 -export -in ServerCert.pem -inkey ServerKey.pem -name "bnr.ro" -out myserver.p12
+keytool -importkeystore -deststorepass password -destkeystore testkeyserver.jks -srckeystore myserver.p12 -srcstoretype PKCS12
+
+keytool -keyalg EC -genkeypair -alias boguscert -storepass password -keypass password -keystore testkeyclient.jks -dname "CN=Developer, OU=Department, O=Company, L=City, ST=State, C=CA"
+keytool -delete -alias boguscert -storepass password -keystore testkeyclient.jks
+openssl pkcs12 -export -in ClientCert.pem -inkey ClientKey.pem -name "bnr.ro" -out myclient.p12
+keytool -importkeystore -deststorepass password -destkeystore testkeyclient.jks -srckeystore myclient.p12 -srcstoretype PKCS12
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+unused:
+keytool -genkeypair -keyalg RSA -alias selfsigned -keystore testkey.jks -storepass password -validity 360 -keysize 2048 -dname "CN=*.bnr.ro, OU=Directia Servicii Informatice, O=Banca Nationala a Romaniei, L=Bucuresti, ST=Bucuresti, C=RO"
+keytool -keyalg RSA -genkeypair -alias boguscert -storepass password -keypass password -keystore testkeyclientold.jks -dname "CN=Developer, OU=Department, O=Company, L=City, ST=State, C=CA"
+keytool -delete -alias boguscert -storepass password -keystore testkeyclientold.jks
